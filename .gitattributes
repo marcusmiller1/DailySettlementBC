@@ -61,3 +61,5 @@
 #*.PDF   diff=astextplain
 #*.rtf   diff=astextplain
 #*.RTF   diff=astextplain
+
+appsettings.secrets.json eol=lf filter=git-crypt diff=git-crypt

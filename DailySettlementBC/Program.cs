@@ -129,7 +129,9 @@ namespace DailySettlementBC
             string res = "";
             try
             {
-                using (var conn = new Microsoft.Data.SqlClient.SqlConnection("Data Source=tcp:mpixdb1.millerslab.com;Initial Catalog=Mpix20_Orders;uid=sa;pwd=millers8050; Failover Partner=mpixdb2.millerslab.com;Encrypt=false"))
+                var mpix = Config.GetSection("ConnectionStrings")["Mpix"];
+
+                using (var conn = new Microsoft.Data.SqlClient.SqlConnection(mpix))
                 {
                     var q = "select TransactionId from OrderFormHeader where order_id = @id";
 
@@ -148,7 +150,9 @@ namespace DailySettlementBC
         {
             try
             {
-                using (var conn = new Microsoft.Data.SqlClient.SqlConnection("Data Source=tcp:pprodsql.millerslab.com;Initial Catalog=Millers_Shipping;uid=sa;pwd=millers8050; Failover Partner=pprodsqlfail.millerslab.com;Encrypt=false"))
+                var PShip = Config.GetSection("ConnectionStrings")["PShip"];
+
+                using (var conn = new Microsoft.Data.SqlClient.SqlConnection(PShip))
                 {
                     var q = "select OrderID, AccountNo from CustomerExpense where InvoiceNo = @id";
 
@@ -171,7 +175,7 @@ namespace DailySettlementBC
         {
             try
             {
-                using (var conn = new Microsoft.Data.SqlClient.SqlConnection("Data Source=tcp:pprodsql.millerslab.com;Initial Catalog=Millers_Accounting;uid=sa;pwd=millers8050; Failover Partner=pprodsqlfail.millerslab.com;Encrypt=false"))
+                using (var conn = new Microsoft.Data.SqlClient.SqlConnection(Accounting))
                 {
                     var q = "select OrderId, OrderAmount as Amount, Location, AccountNo  from PartnerInvoice where OrderHeaderId = @id";
 
@@ -191,7 +195,9 @@ namespace DailySettlementBC
         {
             try
             {
-                using (var conn = new Microsoft.Data.SqlClient.SqlConnection("Data Source=tcp:cdata01.millerslab.com;Initial Catalog=Millers_Production;uid=sa;pwd=Millers1712; Failover Partner=cdata02.millerslab.com;Encrypt=false"))
+                var cprod = Config.GetSection("ConnectionStrings")["CProd"];
+
+                using (var conn = new Microsoft.Data.SqlClient.SqlConnection(cprod))
                 {
                     var q = "select OrderId, TotalAmount, Entity, OrderHeaderid, AccountNo as MillersAccount, Order_Id_Production as OrderIDProduction, AccountID as CustomerId from OrderInfo where partnerorderid = @orderid or OrderId = @orderid";
 
@@ -210,7 +216,9 @@ namespace DailySettlementBC
         {
             try
             {
-                using var conn = new Microsoft.Data.SqlClient.SqlConnection("Data Source=tcp:pprodsql.millerslab.com;Initial Catalog=Millers_Production;uid=sa;pwd=millers8050; Failover Partner=pprodsqlfail.millerslab.com;Encrypt=false");
+                var pprod = Config.GetSection("ConnectionStrings")["PProd"];
+
+                using var conn = new Microsoft.Data.SqlClient.SqlConnection(pprod);
 
                 var q = "select OrderId, TotalAmount, Entity, OrderHeaderId, AccountNo as MillersAccount, Order_ID_Production as OrderIDProduction, AccountID as CustomerId from OrderInfo where partnerorderid = @orderid or OrderId = @orderid";
 
@@ -224,36 +232,7 @@ namespace DailySettlementBC
             }
             return new List<Order>();
         }
-        // static Transaction GetTransaction(string merchid)
-        // {
 
-        //     using var conn = new Microsoft.Data.SqlClient.SqlConnection("Data Source=tcp:pdatasvr01;Initial Catalog=PaymentSystem;uid=sa;pwd=Miller$8050; Failover Partner=pdatasvr02;Encrypt=false");
-        //     var q = "select top 1 * from transactions where orderid = @orderid order by TxnDate desc";
-
-        //     var res = conn.QueryFirstOrDefault<Transaction>(q, new { orderid = StringParam(merchid) });
-
-        //     //return new Transaction { OrderId = string.Join(",", res.Select(x => x.OrderId)), TotalAmount = res.Sum(x => x.TotalAmount) };
-        //     return res;
-        // }
-        // static List<Transaction> GetTransactionsByDay(DateTime day)
-        // {
-        //     try
-        //     {
-        //         using var conn = new Microsoft.Data.SqlClient.SqlConnection("Data Source=tcp:pdatasvr01;Initial Catalog=PaymentSystem;uid=sa;pwd=Miller$8050; Failover Partner=pdatasvr02;Encrypt=false");
-
-        //         var q = "select OrderId, TransactionId, Amount,Entity from Transactions a where a.TxnDate > @start and a.TxnDate < @end and (a.ResponseCode = '000' or a.ResponseText = 'Approved') and (a.TxnType = 'sale' or a.TxnType = 'credit') and OrderID not IN  (select OrderId from Transactions where TxnDate > @start and TxnDate < @end and TxnType = 'void') order by TxnDate";
-
-        //         var res = conn.Query<Transaction>(q, new { start = day.Date, end = day.Date.AddDays(1).AddMinutes(32) });
-
-        //         return res.ToList();
-        //     }
-        //     catch (Exception ex)
-        //     {
-        //         logger.Error($"Error in GetTransactionsByDay: {ex}");
-        //     }
-        //     return new List<Transaction>();
-
-        // }
         public static DbString StringParam(string value, int lentgh = 50, bool fixedLength = false, bool ansi = true)
         {
             return new DbString { Value = value, Length = lentgh, IsAnsi = ansi, IsFixedLength = fixedLength };
