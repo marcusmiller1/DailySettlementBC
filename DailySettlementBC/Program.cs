@@ -175,7 +175,8 @@ namespace DailySettlementBC
         {
             try
             {
-                using (var conn = new Microsoft.Data.SqlClient.SqlConnection(Accounting))
+                var accounting = Config.GetSection("ConnectionStrings")["Accounting"];  
+                using (var conn = new Microsoft.Data.SqlClient.SqlConnection(accounting))
                 {
                     var q = "select OrderId, OrderAmount as Amount, Location, AccountNo  from PartnerInvoice where OrderHeaderId = @id";
 
