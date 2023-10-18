@@ -18,7 +18,7 @@ namespace DailySettlementBC
             if (_config == null)
             {
                 ConfigurationBuilder b = new();
-                b.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
+                b.AddJsonFile("appsettings.secrets.json", optional: false, reloadOnChange: true);
                 _config = b.Build();
             }
         }

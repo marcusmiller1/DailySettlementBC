@@ -3,6 +3,7 @@ using Dapper;
 using NLog;
 using Renci.SshNet;
 using System.IO;
+using System.Net.Mail;
 using System.Text;
 using System.Transactions;
 using static Dapper.SqlMapper;
@@ -103,7 +104,10 @@ namespace DailySettlementBC
                     sb.Insert(0, PayPalReportItems.First().ToCSVHeader() + System.Environment.NewLine);
 
                 string outputpath = Path.Combine(Config.GetSetting("Output"), $"settlement_{DateTime.Now:MMddyyyy}.csv");
+                
                 File.WriteAllText(outputpath, sb.ToString());
+
+                SendReport(outputpath);
 
                 Console.WriteLine("Done");
             }
@@ -113,16 +117,33 @@ namespace DailySettlementBC
             }
 
         }
+        static void SendReport(string path)
+        {
+            var sec = Config.GetSection("ReportSettings");
+
+            using MailMessage mail = new();
+            foreach(var r in sec["MailTo"].Split(','))
+                mail.To.Add(r);
+
+            mail.From = new MailAddress("reports@millerslab.com");
+            mail.Subject = $"Daily Settlement Report";
+            mail.Body = "";
+            if(File.Exists(path))
+                mail.Attachments.Add(new Attachment(path)); 
+
+            new SmtpClient("cliff.millerslab.com").Send(mail);
+            logger.Info($"Report Finished and Emailed");
+        }
         static void Init()
         {
             Config = new Config();
 
-            var paths = new List<string> { @"c:\settlements", @"c:\settlements\logs", @"c:\settlements\braintree", @"c:\settlements\paypal", @"c:\settlements\output" };
-            foreach (var p in paths)
-            {
-                if (!Directory.Exists(p))
-                    Directory.CreateDirectory(p);
-            }
+            //var paths = new List<string> { @"c:\settlements", @"c:\settlements\logs", @"c:\settlements\braintree", @"c:\settlements\paypal", @"c:\settlements\output" };
+            //foreach (var p in paths)
+            //{
+            //    if (!Directory.Exists(p))
+            //        Directory.CreateDirectory(p);
+            //}
         }
         private static string GetPayPalTransactionId(string merchantOrderId)
         {
@@ -263,8 +284,8 @@ namespace DailySettlementBC
 
                 var sec = Config.GetSection("BraintreeApi");
                 string mid = sec["MerchantId"];
-                string publickey = sec["PublicKey"];
-                string privatekey = sec["PrivateKey"];
+                string publickey = sec["Public"];
+                string privatekey = sec["Private"];
 
                 var gateway = new Braintree.BraintreeGateway(Braintree.Environment.PRODUCTION, mid, publickey, privatekey);
 
